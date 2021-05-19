@@ -30,6 +30,13 @@ app.get('/',function(req,res){
     // Do something with the data returned from python script
     res.setHeader('Content-Type', 'application/json');
     res.end(data);
+	});
+  	pythonProcess.stderr.on('data', (data) => {
+  		console.error(`stderr: ${data}`);
+	  	res.status(404).send("ERROR: "+`${data}`)
+  		//console.log(data);
+  		//res.write(data);
+  	//	res.end();
 });
 };
 });
@@ -47,5 +54,5 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log('Express started on flip3.engr.oregonstate.edu:' + app.get('port') + '; press Ctrl-C to terminate.');
+  console.log('Express started on localhost:' + app.get('port') + '; press Ctrl-C to terminate.');
 });
