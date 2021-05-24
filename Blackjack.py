@@ -3,47 +3,29 @@ import random
 from PIL import ImageTk, Image
 import time
 
-##PLAN
-# Dealer Cards and Player Cards
-# Be able to deal the cards
-# Display the cards (w/ GUI)
-# Sum of Player/Dealers cards
-# Compare sums of player/dealer
-# If players sum > 21, then bust
-# if players sum < 21, option to hit or stay
-# if player chooses to stay, compare sum of dealer vs player
-# if players sum <= 21 AND > Dealers sum, then player wins
-# if players sum < dealers sum, player loses
-
+in_game = True
+hidden = True
 total_wins = 0
 total_losses = 0
 SUITS = ['C', 'S', 'H', 'D']
+
+
 # RANKS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K')
 # VALUES = {'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 10, 'Q': 10, 'K': 10}
-CARDS = []
-
-
-"""
-CARD_SIZE = (73, 98)
-CARD_CENTER = (36.5, 49)
-
-
-CARD_BACK_SIZE = (71, 96)
-CARD_BACK_CENTER = (35.5, 48)
-
-"""
 
 
 class Card:
+    global hidden
+
     def __init__(self, suit, val, image):
         self.suit = suit
         self.val = val
         self.image = image
+        self.blank = ImageTk.PhotoImage(Image.open('card_back.png').convert('RGBA'))
 
     # Simple way of showing current card
     def show(self):
         print("{} of {}".format(self.val, self.suit))
-
 
     def get_val(self):
         return self.val
@@ -51,22 +33,22 @@ class Card:
     def get_suit(self):
         return self.suit
 
-    def draw(self, pos, frame):
-        # self.card = ImageTk.PhotoImage(Image.open("card_back.png"))
+    def draw(self, pos, frame, player):
         Label(frame, image=self.image).place(x=0 + (80 * pos), y=0)
+        if hidden and player == dealer:
+            Label(frame, image=self.blank).place(x=0, y=0)
 
 
 class Deck:
     def __init__(self):
         self.cards = []
-        # self.build_deck()
 
     # Building deck numbers 1-13 and suits as 'C', 'S', etc.
     def build_deck(self):
         img = Image.open('CARDS.png').convert('RGBA')
         for i in range(0, 4):
             for j in range(1, 14):
-                crop = img.crop([(j-1)*73, i*98, j*73, (i+1)*98])
+                crop = img.crop([(j - 1) * 73, i * 98, j * 73, (i + 1) * 98])
                 crop_img = ImageTk.PhotoImage(crop)
                 self.cards.append(Card(SUITS[i], j, crop_img))
 
@@ -103,11 +85,14 @@ class Hand:
         pos = 0
 
         for i in self.cards:
-            i.draw(pos, frame)
+            i.draw(pos, frame, player)
             pos += 1
 
-        Label(frame, bg='green', font='Helvetica 20 bold', text='Total: ' + str(player.get_value())).place(
-            x=700, y=240)
+        if player == dealer and hidden:
+            pass
+        else:
+            Label(frame, bg='green', font='Perpetua 25 bold', text='Total: ' + str(player.get_value())).place(
+                x=500, y=240)
 
     def get_value(self):
         value = 0
@@ -121,44 +106,96 @@ class Hand:
             value = value + 10
         return value
 
-# Dont need this
-    def draw(self, canvas, pos):
-        j = 0
-        for i in self.cards:
-            i.draw(canvas, [(pos[0] + (j * 80)), pos[1]])
-            j = j + 1
 
+def hit(frame, d_frame, button, lang):
+    global deck, hand, dealer, total_losses, total_wins, in_game, hidden
+    bust_lang = 'Bust! You Lose'
 
-def hit(frame):
-    global deck, hand, dealer, total_losses, total_wins
+    if not lang:
+        bust_lang = 'Fracasso! Você Perdeu'
 
-    card = deck.draw_card()
-    hand.add_card(card)
-
-    hand.show_hand(frame, hand)
-    Label(frame, bg='green', font='Helvetica 20 bold', text='Total: ' + str(hand.get_value())).place(
-        x=700, y=240)
-    # if hand.get_value() > 21:
-    #    total_losses = (total_losses + 1)
-
-
-def stay(frame):
-    global deck, hand, dealer, total_losses, total_wins
-
-    while dealer.get_value() < 17:
+    if in_game:
         card = deck.draw_card()
-        dealer.add_card(card)
+        hand.add_card(card)
+
+        hand.show_hand(frame, hand)
+        Label(frame, bg='green', font='Perpetua 25 bold', text='Total: ' + str(hand.get_value())).place(
+            x=500, y=240)
+
+        if hand.get_value() == 21:
+            Label(frame, bg='green', font='Perpetua 25 bold', text='Blackjack!').place(x=750, y=240)
+            stay(d_frame, button, lang)
+            return
+
+        if hand.get_value() > 21:
+            total_losses += 1
+            hidden = False
+            dealer.show_hand(d_frame, dealer)
+            in_game = False
+            Label(frame, bg='green', font='Perpetua 25 bold', text=bust_lang).place(x=750, y=240)
+
+        if in_game is False:
+            show_button(button)
+
+
+def stay(frame, button, lang):
+    global deck, hand, dealer, total_losses, total_wins, in_game, hidden
+    bust_lang = 'Dealer Busts! You Win!'
+    lose_lang = 'Dealer Wins! You Lose'
+    tie_lang = 'It\'s a tie!'
+    win_lang = 'You Win!'
+
+    if not lang:
+        bust_lang = 'Busto de Negociante! Você Ganha!'
+        lose_lang = 'Revendedor Ganha! Você perdeu'
+        tie_lang = 'É um Empate!'
+        win_lang = 'Você Ganha!'
+
+    if in_game:
+        hidden = False
         dealer.show_hand(frame, dealer)
-        time.sleep(1)
-    #if dealer.get_value() > 21:
-    #    total_wins = (total_wins + 1)
+        frame.master.update()
+        in_game = False
+        while dealer.get_value() < 17:
+            time.sleep(1)
+            card = deck.draw_card()
+            dealer.add_card(card)
+            dealer.show_hand(frame, dealer)
+            frame.master.update()
+
+        if dealer.get_value() > 21:
+            total_wins += 1
+            dealer.show_hand(frame, dealer)
+            Label(frame, bg='green', font='Perpetua 25 bold', text=bust_lang).place(x=750, y=240)
+        else:
+            if dealer.get_value() > hand.get_value():
+                Label(frame, bg='green', font='Perpetua 25 bold', text=lose_lang).place(x=750, y=240)
+                dealer.show_hand(frame, dealer)
+                total_losses += 1
+            elif dealer.get_value() == hand.get_value():
+                Label(frame, bg='green', font='Perpetua 25 bold', text=tie_lang).place(x=750, y=240)
+                dealer.show_hand(frame, dealer)
+
+            else:
+                Label(frame, bg='green', font='Perpetua 25 bold', text=win_lang).place(x=750, y=240)
+                dealer.show_hand(frame, dealer)
+                total_wins += 1
+
+        if in_game is False:
+            show_button(button)
+
+
+def show_button(button):
+    button.place(x=525, y=120)
 
 
 def deal():
-    global deck, hand, dealer, total_losses, total_wins
+    global deck, hand, dealer, total_losses, total_wins, in_game, hidden
 
     deck = Deck()
     deck.build_deck()
+    hidden = True
+    in_game = True
     hand = Hand()
     dealer = Hand()
     deck.shuffle()
@@ -166,7 +203,6 @@ def deal():
     hand.add_card(deck.draw_card())
     dealer.add_card(deck.draw_card())
     dealer.add_card(deck.draw_card())
-
 
 
 deck = Deck()
