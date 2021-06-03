@@ -9,9 +9,13 @@ total_wins = 0
 total_losses = 0
 SUITS = ['C', 'S', 'H', 'D']
 
-
-# RANKS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K')
-# VALUES = {'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 10, 'Q': 10, 'K': 10}
+lang_dict = {
+    'en': ['Bust! You Lose', 'Dealer Busts! You Win!', 'Dealer Wins! You Lose', 'It\'s a tie!', 'You Win!'],
+    'pt': ['Fracasso! Você Perdeu', 'Busto de Negociante! Você Ganha!', 'Revendedor Ganha! Você perdeu',
+           'É um Empate!', 'Você Ganha!'],
+    'fr': ['Buste! Tu Perds', 'Concessionnaire Bustes! Vous Gagnez', 'Concessionnaire Gagne! Tu as Perdu',
+           'C\'est une Cravate!', 'Vous Gagnez']
+}
 
 
 class Card:
@@ -33,6 +37,7 @@ class Card:
     def get_suit(self):
         return self.suit
 
+    # Draws the card in the correct position and in the correct frame
     def draw(self, pos, frame, player):
         Label(frame, image=self.image).place(x=0 + (80 * pos), y=0)
         if hidden and player == dealer:
@@ -81,6 +86,7 @@ class Hand:
     def add_card(self, card):
         self.cards.append(card)
 
+    # Important for displaying/drawing hand to the player/dealer
     def show_hand(self, frame, player):
         pos = 0
 
@@ -109,10 +115,8 @@ class Hand:
 
 def hit(frame, d_frame, button, lang):
     global deck, hand, dealer, total_losses, total_wins, in_game, hidden
-    bust_lang = 'Bust! You Lose'
-
-    if not lang:
-        bust_lang = 'Fracasso! Você Perdeu'
+    # Displaying correct language for the user
+    bust_lang = lang_dict[lang][0]
 
     if in_game:
         card = deck.draw_card()
@@ -134,22 +138,18 @@ def hit(frame, d_frame, button, lang):
             in_game = False
             Label(frame, bg='green', font='Perpetua 25 bold', text=bust_lang).place(x=750, y=240)
 
+        # Makes sure player cannot hit if the current game is over
         if in_game is False:
             show_button(button)
 
 
 def stay(frame, button, lang):
     global deck, hand, dealer, total_losses, total_wins, in_game, hidden
-    bust_lang = 'Dealer Busts! You Win!'
-    lose_lang = 'Dealer Wins! You Lose'
-    tie_lang = 'It\'s a tie!'
-    win_lang = 'You Win!'
-
-    if not lang:
-        bust_lang = 'Busto de Negociante! Você Ganha!'
-        lose_lang = 'Revendedor Ganha! Você perdeu'
-        tie_lang = 'É um Empate!'
-        win_lang = 'Você Ganha!'
+    # Displaying correct language for the user
+    bust_lang = lang_dict[lang][1]
+    lose_lang = lang_dict[lang][2]
+    tie_lang = lang_dict[lang][3]
+    win_lang = lang_dict[lang][4]
 
     if in_game:
         hidden = False
@@ -189,6 +189,7 @@ def show_button(button):
     button.place(x=525, y=120)
 
 
+# Allows the game to begin by setting up the deck/hands of the players 
 def deal():
     global deck, hand, dealer, total_losses, total_wins, in_game, hidden
 

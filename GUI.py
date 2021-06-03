@@ -2,8 +2,24 @@ from tkinter import *
 import Blackjack as blj
 import urllib.request
 import json
-lang = True
 
+lang = 'en'
+lang_dict = {
+    'en': ['Rules of Blackjack', 'Basic Rules:', 'Exit', 'Start Game', 'Rules', 'Change Language', 'Exit Game',
+           'Options:', 'Main Menu', 'Hit', 'Stay', 'Continue to End Game Screen', 'Game Finished!',
+           'Current Session Totals:', 'Wins: ', 'Losses: ', 'Play Again?', 'Choose your language', 'Confirm'],
+    'pt': ['Regras do Blackjack', 'Regras Básicas:', 'Saída', 'Começar o Jogo', 'Regras', 'Mudar Idioma',
+           'Sair do Jogo', 'Opções:', 'Menu Principal', 'Acertar', 'Fique', 'Continuar para a Tela Final do Jogo',
+           'Jogo Terminado!', 'Totais da Sessão Atual:', 'Vitórias: ', 'Perdas: ', 'Jogar de Novo?',
+           'Escolha seu idioma', 'Confirme'],
+    'fr': ['Règles du Blackjack', 'Règles de Base:', 'Sortir', 'Démarrer Jeu', 'Des Règles', 'Changer de Langue',
+           'Quitter le Jeu', 'Options:', 'Menu Principal', 'Frappé', 'Rester', 'Continuer à Terminer l\'écran de Jeu',
+           'Jeu Terminé', 'Totaux de la Session en Cours', 'Gagne: ', 'Pertes: ', 'Rejouer?', 'Choisissez Votre Langue',
+           'Confirmer']
+}
+
+# Must be VPN'd into OSU in order to user the web scraper/web transformer.  Avoid this window if you cannot VPN
+# in.
 def RulesWindow():
     newWindow = Toplevel(root)
     newWindow.title("Rules")
@@ -14,17 +30,23 @@ def RulesWindow():
     # contents = urllib2.urlopen(url).read()
     a = json.loads(contents)
     output = "".join(a['Rules'])
-    rules_lang = 'Rules of Blackjack'
-    basic_lang = 'Basic Rules:'
-    exit_lang = 'Exit'
+    rules_lang = lang_dict[lang][0]
+    basic_lang = lang_dict[lang][1]
+    exit_lang = lang_dict[lang][2]
 
-    if not lang:
-        rules_lang = 'Regras do Blackjack'
-        basic_lang = 'Regras básicas:'
-        exit_lang = 'Saída'
+    if lang == 'pt':
         output = output.replace(' ', '%20')
         output = output.replace('\n', '%0A')
         j_url = 'http://flip3.engr.oregonstate.edu:60639/?sourceLanguage=en&destinationLanguage=pt&text=' + output
+        contents2 = urllib.request.urlopen(j_url).read()
+        # contents2 = urllib2.urlopen(j_url).read()
+        b = json.loads(contents2)
+        output = "".join(b['translation'])
+
+    elif lang == 'fr':
+        output = output.replace(' ', '%20')
+        output = output.replace('\n', '%0A')
+        j_url = 'http://flip3.engr.oregonstate.edu:60639/?sourceLanguage=en&destinationLanguage=fr&text=' + output
         contents2 = urllib.request.urlopen(j_url).read()
         # contents2 = urllib2.urlopen(j_url).read()
         b = json.loads(contents2)
@@ -60,20 +82,15 @@ class MainPage(Frame):
         # Initialization for Main Menu
         Frame.__init__(self, master, width=1500, height=800)
         self.configure(bg='green')
-        start_lang = 'Start Game'
-        rules_lang = 'Rules'
-        lang_lang = 'Change Language'
-        exit_lang = 'Exit Game'
-
-        if not lang:
-            start_lang = 'Começar o Jogo'
-            rules_lang = 'Regras'
-            lang_lang = 'Mudar Idioma'
-            exit_lang = 'Sair do Jogo'
+        start_lang = lang_dict[lang][3]
+        rules_lang = lang_dict[lang][4]
+        lang_lang = lang_dict[lang][5]
+        exit_lang = lang_dict[lang][6]
 
         # Configuration of Labels/Buttons for Main Menu
         Label(self, text="BLACKJACK", font='Stencil 50 bold underline', bg='green').pack(side=TOP, ipady=100)
-        Button(self, text=start_lang, font='Perpetua 25 bold', width=15, command=lambda: master.switch_frame(Start)).pack(
+        Button(self, text=start_lang, font='Perpetua 25 bold', width=15,
+               command=lambda: master.switch_frame(Start)).pack(
             pady=5)
         Button(self, text=rules_lang, font='Perpetua 25 bold', width=15, command=lambda: RulesWindow()).pack(
             pady=5)
@@ -83,6 +100,7 @@ class MainPage(Frame):
 
 
 class Start(Frame):
+    # Configures the 'Start Game' page and separates it into 3 frames
     def __init__(self, master):
         Frame.__init__(self, master, width=1500, height=800)
         self.configure(bg='green')
@@ -91,23 +109,14 @@ class Start(Frame):
         dealer_frame.pack(side=TOP)
         menu = Menu(master)
         master.config(menu=menu)
-        options_lang = 'Options:'
-        menu_lang = 'Main Menu'
-        rules_lang = 'Rules'
-        exit_lang = 'Exit Game'
-        hit_lang = 'Hit'
-        stay_lang = 'Stay'
-        continue_lang = 'Continue to End Game Screen'
-
-
-        if not lang:
-            options_lang = 'Opções:'
-            menu_lang = 'Menu Principal'
-            rules_lang = 'Regras'
-            exit_lang = 'Sair do Jogo'
-            hit_lang = 'Acertar'
-            stay_lang = 'Fique'
-            continue_lang = 'Continuar para a Tela Final do Jogo'
+        # Displaying correct language
+        options_lang = lang_dict[lang][7]
+        menu_lang = lang_dict[lang][8]
+        rules_lang = lang_dict[lang][4]
+        exit_lang = lang_dict[lang][6]
+        hit_lang = lang_dict[lang][9]
+        stay_lang = lang_dict[lang][10]
+        continue_lang = lang_dict[lang][11]
 
         subMenu = Menu(menu, tearoff=0)
         menu.add_cascade(label=options_lang, menu=subMenu)
@@ -129,39 +138,34 @@ class Start(Frame):
             x=825, y=10)
         control_frame.pack(side=BOTTOM)
 
+        # Start game by dealing and showing player their hand
         blj.deal()
         blj.dealer.show_hand(dealer_frame, blj.dealer)
         blj.hand.show_hand(player_frame, blj.hand)
         master.update()
         if blj.hand.get_value() == 21:
-            Label(player_frame, bg='green', font='Helvetica 20 bold', text='Blackjack!').place(x=750, y=240)
+            Label(player_frame, bg='green', font='Perpetua 20 bold', text='Blackjack!').place(x=750, y=240)
             blj.stay(dealer_frame, Next, lang)
 
+    # Needed to destroy all frames, destroy dropdown menu, and switch pages
     def mainmenu(self, m, page):
         m.destroy()
         self.master.switch_frame(page)
 
 
 class EndGame(Frame):
+    # Configuring the 'End Game' page
     def __init__(self, master):
         Frame.__init__(self, master, width=1500, height=800)
         self.configure(bg='green')
-        finished_lang = 'Game Finished!'
-        totals_lang = 'Current Session Totals:'
-        wins_lang = 'Wins: '
-        losses_lang = 'Losses: '
-        again_lang = 'Play Again?'
-        main_lang = 'Main Menu'
-        exit_lang = 'Exit Game'
-
-        if not lang:
-            finished_lang = 'Jogo Terminado!'
-            totals_lang = 'Totais da Sessão Atual:'
-            wins_lang = 'Vitórias: '
-            losses_lang = 'Perdas: '
-            again_lang = 'Jogar de Novo?'
-            main_lang = 'Menu Principal'
-            exit_lang = 'Sair do Jogo'
+        # Selecting correct language to display
+        finished_lang = lang_dict[lang][12]
+        totals_lang = lang_dict[lang][13]
+        wins_lang = lang_dict[lang][14]
+        losses_lang = lang_dict[lang][15]
+        again_lang = lang_dict[lang][16]
+        main_lang = lang_dict[lang][8]
+        exit_lang = lang_dict[lang][6]
 
         Label(self, text=finished_lang, font='Stencil 50 bold italic underline', bg='green').place(
             x=500, y=10)
@@ -176,34 +180,42 @@ class EndGame(Frame):
 
 
 class LangChange(Frame):
+    # Configuring the 'Change Language' page
     def __init__(self, master):
         Frame.__init__(self, master, width=1500, height=800)
         self.configure(bg='green')
         v = IntVar()
-        choose_lang = 'Choose your language'
-        confirm_lang = 'Confirm'
-
-        if not lang:
-            choose_lang = 'Escolha seu idioma'
-            confirm_lang = 'Confirme'
+        choose_lang = lang_dict[lang][17]
+        confirm_lang = lang_dict[lang][18]
 
         Label(self, text=choose_lang, font='Perpetua 50 bold italic', bg='green', justify=LEFT).pack(
             side=TOP, ipady=80)
-        Radiobutton(self, text="English", padx=20, variable=v, value=1, font='Helvetica 15', bg='green', command=lambda: self.En_lang()).pack(
+        Radiobutton(self, text="English", padx=20, variable=v, value=1, font='Helvetica 15', bg='green',
+                    command=lambda: self.En_lang()).pack(
             anchor=W, pady=10)
-        Radiobutton(self, text="Portuguese", padx=20, variable=v, value=2, font='Helvetica 15', bg='green', command=lambda: self.Pt_lang()).pack(
+        Radiobutton(self, text="Portuguese", padx=20, variable=v, value=2, font='Helvetica 15', bg='green',
+                    command=lambda: self.Pt_lang()).pack(
+            anchor=W, pady=10)
+        Radiobutton(self, text="French", padx=20, variable=v, value=3, font='Helvetica 15', bg='green',
+                    command=lambda: self.Fr_lang()).pack(
             anchor=W, pady=10)
 
         Button(self, text=confirm_lang, font='Perpetua 20 bold', width=25,
                command=lambda: master.switch_frame(MainPage)).pack(side=LEFT, anchor=SW, padx=140, pady=10)
 
+    # Needed to allow the player to change the language on this page
     def En_lang(self):
         global lang
-        lang = True
+        lang = 'en'
 
     def Pt_lang(self):
         global lang
-        lang = False
+        lang = 'pt'
+
+    def Fr_lang(self):
+        global lang
+        lang = 'fr'
+
 
 if __name__ == "__main__":
     root = Test()
